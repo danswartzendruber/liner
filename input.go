@@ -1,5 +1,5 @@
-//go:build linux || darwin || openbsd || freebsd || netbsd || solaris
-// +build linux darwin openbsd freebsd netbsd solaris
+//go:build linux || darwin || openbsd || freebsd || netbsd
+// +build linux darwin openbsd freebsd netbsd
 
 package liner
 
@@ -12,6 +12,7 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"unicode"
 )
 
 type nexter struct {
@@ -28,6 +29,8 @@ type State struct {
 	winch       chan os.Signal
 	pending     []rune
 	useCHA      bool
+	timeout     int16
+	deadline    time.Time
 }
 
 // NewLiner initializes a new *State, and sets the terminal into raw mode. To
@@ -42,7 +45,7 @@ func NewLiner() *State {
 	} else {
 		s.inputRedirected = true
 	}
-	if _, err := getMode(syscall.Stdout); err != nil {
+	if _, err := getMode(syscall.Stdout); err != 0 {
 		s.outputRedirected = true
 	}
 	if s.inputRedirected && s.outputRedirected {
@@ -53,8 +56,6 @@ func NewLiner() *State {
 		mode.Iflag &^= icrnl | inpck | istrip | ixon
 		mode.Cflag |= cs8
 		mode.Lflag &^= syscall.ECHO | icanon | iexten
-		mode.Cc[syscall.VMIN] = 1
-		mode.Cc[syscall.VTIME] = 0
 		mode.ApplyMode()
 
 		winch := make(chan os.Signal, 1)
@@ -94,6 +95,12 @@ func (s *State) restartPrompt() {
 	go func() {
 		for {
 			var n nexter
+			if n.err = s.pollStdin(); n.err != nil {
+				n.r = unicode.ReplacementChar
+				next <- n
+				close(next)
+				return
+			}
 			n.r, _, n.err = s.r.ReadRune()
 			next <- n
 			// Shut down nexter loop when an end condition has been reached

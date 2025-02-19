@@ -1,5 +1,5 @@
-//go:build windows || linux || darwin || openbsd || freebsd || netbsd || solaris
-// +build windows linux darwin openbsd freebsd netbsd solaris
+//go:build windows || linux || darwin || openbsd || freebsd || netbsd
+// +build windows linux darwin openbsd freebsd netbsd
 
 package liner
 
@@ -11,6 +11,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time"
 	"unicode"
 	"unicode/utf8"
 )
@@ -586,6 +587,33 @@ func (s *State) yank(p []rune, text []rune, pos int) ([]rune, int, interface{}, 
 				return line, pos, next, nil
 			}
 		}
+	}
+}
+
+//
+// SetTimeout initializes the timeout value (seconds from 1 to 32767)
+// that the Prompt routine will wait for before aborting with a timeout
+// error.  A timeout of 0 (default) means no timeout
+//
+
+func (s *State) SetTimeout(timeout int16) error {
+
+	var zeroTime time.Time
+
+	if timeout < 0 {
+		return ErrInvalidTimeout
+	} else if timeout == 0 {
+		s.timeout = 0
+		s.deadline = zeroTime
+		return nil
+	} else {
+		s.timeout = timeout
+		s.deadline = time.Now()
+		s.deadline = s.deadline.Add(time.Second * time.Duration(timeout))
+		//	fmt.Printf("Timeout = %v\n", s.timeout)
+		//	fmt.Printf("Now = %v\n", time.Now())
+		//	fmt.Printf("Timeout expires %v\n", s.deadline)
+		return nil
 	}
 }
 

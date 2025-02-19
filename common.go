@@ -52,6 +52,14 @@ const (
 	TabPrints
 )
 
+// ErrTimedOut is returned if a timed Prompt or PromptSuggestion
+// does not terminate before the deadline
+var ErrTimedOut = errTimedOut
+
+// ErrInvalidTimeout is returned from SetTimeout if the specified timeout
+// value is < 0
+var ErrInvalidTimeout = errors.New("invalid timeout")
+
 // ErrPromptAborted is returned from Prompt or PasswordPrompt when the user presses Ctrl-C
 // if SetCtrlCAborts(true) has been called on the State
 var ErrPromptAborted = errors.New("prompt aborted")
