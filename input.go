@@ -56,7 +56,7 @@ func NewLiner() *State {
 		mode.Iflag &^= icrnl | inpck | istrip | ixon
 		mode.Cflag |= cs8
 		mode.Lflag &^= syscall.ECHO | icanon | iexten
-		mode.ApplyMode()
+		_ = mode.ApplyMode()
 
 		winch := make(chan os.Signal, 1)
 		signal.Notify(winch, syscall.SIGWINCH)
@@ -80,7 +80,7 @@ func (s *State) startPrompt() {
 			s.defaultMode = *m.(*termios)
 			mode := s.defaultMode
 			mode.Lflag &^= isig
-			mode.ApplyMode()
+			_ = mode.ApplyMode()
 		}
 	}
 	s.restartPrompt()
@@ -115,7 +115,7 @@ func (s *State) restartPrompt() {
 
 func (s *State) stopPrompt() {
 	if s.terminalSupported {
-		s.defaultMode.ApplyMode()
+		_ = s.defaultMode.ApplyMode()
 	}
 }
 
@@ -364,7 +364,7 @@ func (s *State) readNext() (interface{}, error) {
 func (s *State) Close() error {
 	signal.Stop(s.winch)
 	if !s.inputRedirected {
-		s.origMode.ApplyMode()
+		_ = s.origMode.ApplyMode()
 	}
 	return nil
 }

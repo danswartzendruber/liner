@@ -1,7 +1,6 @@
 package liner
 
 import (
-	"errors"
 	"fmt"
 	"syscall"
 	"time"
@@ -61,11 +60,11 @@ func (s *State) pollStdin() error {
 		} else if n == 0 {
 			return errTimedOut
 		} else if n != 1 {
-			return errors.New(fmt.Sprintf("n == %d", n))
+			return fmt.Errorf("n == %d", n)
 		}
 
 		if rdset.Bits[syscall.Stdin] == 0 {
-			return errors.New(fmt.Sprintf("fd %d not ready", n))
+			return fmt.Errorf("fd %d not ready", n)
 		} else {
 			return nil
 		}
